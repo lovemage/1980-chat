@@ -9,20 +9,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
 
-// 生产环境静态文件服务
+// CORS 配置
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://1980-chat.vercel.app']
+    : 'http://localhost:5178',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+// 静态文件服务
 app.use(express.static(path.join(__dirname, 'dist')));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-frontend-url.com']  // 这里需要替换为你的实际前端地址
-      : 'http://localhost:5178',  // 更新为当前使用的端口
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://1980-chat.vercel.app']
+      : 'http://localhost:5178',
     methods: ['GET', 'POST'],
     credentials: true
-  }
+  },
+  path: '/socket.io/',
+  transports: ['websocket', 'polling']
 });
 
 // 存储用户信息
@@ -118,16 +128,23 @@ io.on('connection', (socket) => {
   });
 });
 
-let PORT = process.env.PORT || 3000;
-const server = httpServer.listen(PORT, () => {
-  console.log(`服务器运行在端口 ${PORT}`);
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.log(`端口 ${PORT} 被占用，尝试端口 ${PORT + 1}`);
-    PORT++;
-    server.close();
-    server.listen(PORT);
-  } else {
-    console.error('服务器启动错误:', err);
-  }
-}); 
+// 导出 app 和 httpServer 以供 Vercel 使用
+export default app;
+export { httpServer };
+
+// 仅在非 Vercel 环境下启动服务器
+if (process.env.NODE_ENV !== 'production') {
+  let PORT = process.env.PORT || 3000;
+  const server = httpServer.listen(PORT, () => {
+    console.log(`服务器运行在端口 ${PORT}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`端口 ${PORT} 被占用，尝试端口 ${PORT + 1}`);
+      PORT++;
+      server.close();
+      server.listen(PORT);
+    } else {
+      console.error('服务器启动错误:', err);
+    }
+  });
+} 
