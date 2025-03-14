@@ -18,9 +18,10 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://your-domain.com', 'http://your-domain.com'] 
+      ? ['https://1980-chat.vercel.app', 'https://*.vercel.app']
       : 'http://localhost:5173',
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 

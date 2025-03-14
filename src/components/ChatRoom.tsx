@@ -369,7 +369,14 @@ const ChatRoom: React.FC = () => {
 
   useEffect(() => {
     // 连接到 Socket.io 服务器
-    socketRef.current = io('http://localhost:3000');
+    const serverUrl = import.meta.env.PROD 
+      ? 'https://1980-chat.vercel.app'
+      : 'http://localhost:3000';
+      
+    socketRef.current = io(serverUrl, {
+      withCredentials: true,
+      transports: ['websocket', 'polling']
+    });
 
     // 监听错误消息
     socketRef.current.on('error', (message: string) => {
