@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+
+/* Retro terminal effect */
+@keyframes scanline {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(57, 255, 20, 0.1);
+  animation: scanline 10s linear infinite;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* CRT flicker effect */
+@keyframes flicker {
+  0% {
+    opacity: 0.97;
+  }
+  5% {
+    opacity: 0.95;
+  }
+  10% {
+    opacity: 0.97;
+  }
+  15% {
+    opacity: 0.94;
+  }
+  20% {
+    opacity: 0.98;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  80% {
+    opacity: 0.98;
+  }
+  90% {
+    opacity: 0.96;
+  }
+  100% {
+    opacity: 0.98;
+  }
+}
+
+#root {
+  animation: flicker 5s infinite alternate;
+  min-height: 100vh;
+}
+
+/* Green text selection like an old terminal */
+::selection {
+  background: #39FF14;
+  color: #000;
+  text-shadow: none;
+}
