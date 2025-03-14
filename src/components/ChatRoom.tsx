@@ -370,8 +370,8 @@ const ChatRoom: React.FC = () => {
   useEffect(() => {
     // 连接到 Socket.io 服务器
     const serverUrl = import.meta.env.PROD 
-      ? 'https://1980-chat.vercel.app'
-      : 'http://localhost:3000';
+      ? 'https://your-backend-url.com'  // 这里需要替换为你的实际后端服务器地址
+      : 'http://localhost:3002';  // 更新为实际运行的端口
       
     socketRef.current = io(serverUrl, {
       withCredentials: true,

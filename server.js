@@ -18,8 +18,8 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://1980-chat.vercel.app', 'https://*.vercel.app']
-      : 'http://localhost:5173',
+      ? ['https://your-frontend-url.com']  // 这里需要替换为你的实际前端地址
+      : 'http://localhost:5178',  // 更新为当前使用的端口
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -119,18 +119,15 @@ io.on('connection', (socket) => {
 });
 
 let PORT = process.env.PORT || 3000;
-const startServer = () => {
-  httpServer.listen(PORT, () => {
-    console.log(`服务器运行在端口 ${PORT}`);
-  }).on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.log(`端口 ${PORT} 被占用，尝试下一个端口...`);
-      PORT++;
-      startServer();
-    } else {
-      console.error('服务器启动错误:', err);
-    }
-  });
-};
-
-startServer(); 
+const server = httpServer.listen(PORT, () => {
+  console.log(`服务器运行在端口 ${PORT}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`端口 ${PORT} 被占用，尝试端口 ${PORT + 1}`);
+    PORT++;
+    server.close();
+    server.listen(PORT);
+  } else {
+    console.error('服务器启动错误:', err);
+  }
+}); 
