@@ -4,9 +4,10 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = dirname(__filename);
 
 const app = express();
 
@@ -38,6 +39,7 @@ const io = new Server(httpServer, {
 // 存储用户信息
 const users = new Map();
 const rooms = ['mtv', 'picman', 'future'];
+const messages = [];
 
 io.on('connection', (socket) => {
   console.log('用户连接成功');
@@ -61,6 +63,8 @@ io.on('connection', (socket) => {
         race: info.race,
         region: info.region
       })));
+    
+    socket.emit('history', messages);
     
     console.log(`${nickname} 加入了 ${room} 房间`);
   });
@@ -92,12 +96,14 @@ io.on('connection', (socket) => {
 
   socket.on('sendMessage', (data) => {
     const { text, room } = data;
-    io.to(room).emit('message', {
+    const message = {
       id: Date.now(),
       text,
       timestamp: new Date(),
       ...data
-    });
+    };
+    messages.push(message);
+    io.to(room).emit('message', message);
   });
 
   socket.on('disconnect', () => {

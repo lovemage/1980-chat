@@ -10,17 +10,41 @@ body {
   overflow: hidden;
 }
 
-/* Retro terminal effect */
-@keyframes scanline {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(100vh);
-  }
+/* Loading Screen Styles */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', monospace;
+  color: #39FF14;
 }
 
-body::before {
+/* 闪烁动画 */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 扫描线效果 */
+.loading-screen::before {
   content: '';
   position: fixed;
   top: 0;
@@ -33,45 +57,132 @@ body::before {
   z-index: 999;
 }
 
-/* CRT flicker effect */
-@keyframes flicker {
+@keyframes scanline {
   0% {
-    opacity: 0.97;
-  }
-  5% {
-    opacity: 0.95;
-  }
-  10% {
-    opacity: 0.97;
-  }
-  15% {
-    opacity: 0.94;
-  }
-  20% {
-    opacity: 0.98;
-  }
-  50% {
-    opacity: 0.95;
-  }
-  80% {
-    opacity: 0.98;
-  }
-  90% {
-    opacity: 0.96;
+    transform: translateY(0);
   }
   100% {
-    opacity: 0.98;
+    transform: translateY(100vh);
   }
 }
 
-#root {
-  animation: flicker 5s infinite alternate;
-  min-height: 100vh;
+/* CRT flicker effect */
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  5% { opacity: 0.95; }
+  10% { opacity: 0.97; }
+  15% { opacity: 0.94; }
+  20% { opacity: 0.98; }
+  50% { opacity: 0.95; }
+  80% { opacity: 0.98; }
+  90% { opacity: 0.96; }
+  100% { opacity: 0.98; }
 }
 
-/* Green text selection like an old terminal */
+.loading-screen {
+  animation: flicker 5s infinite alternate;
+}
+
+/* Green text selection */
 ::selection {
   background: #39FF14;
   color: #000;
   text-shadow: none;
+}
+
+/* 噪点效果 */
+.loading-screen::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 255, 0, 0.05),
+      rgba(0, 0, 0, 0.05) 1px
+    );
+  animation: noise 0.2s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes noise {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-1px, -1px); }
+  20% { transform: translate(1px, 1px); }
+  30% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  50% { transform: translate(-1px, 2px); }
+  60% { transform: translate(1px, -1px); }
+  70% { transform: translate(2px, 1px); }
+  80% { transform: translate(-2px, -1px); }
+  90% { transform: translate(1px, 2px); }
+}
+
+/* CRT 效果 */
+.crt::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%,
+    rgba(0, 0, 0, 0.25) 50%
+  );
+  background-size: 100% 4px;
+  z-index: 2;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+.crt::after {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: rgba(18, 16, 16, 0.1);
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+/* 按钮悬停效果 */
+.hover-glitch {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.hover-glitch:hover {
+  text-shadow: 
+    2px 2px #0f0,
+    -2px -2px #0f0;
+  transform: scale(1.02);
+}
+
+.hover-glitch:hover::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 2px;
+  text-shadow: -1px 0 #0f0;
+  top: 0;
+  color: #0f0;
+  background: #000;
+  overflow: hidden;
+  animation: noise-anim 2s infinite linear alternate-reverse;
+}
+
+/* 输入框焦点效果 */
+input:focus, select:focus {
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+  animation: pulse 2s infinite;
 }

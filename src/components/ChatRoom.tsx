@@ -1,28 +1,33 @@
 import { useState, useRef, useEffect } from 'react';
 import { Terminal, Send, Users, Globe2, Play, Clock, ArrowLeft } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
+import LoadingScreen from './LoadingScreen';
 
 // 聊天室类型
 type ChatRoomType = 'mtv' | 'picman' | 'future';
 
 // 定义种族
 const RACES = [
-  { id: 'humans', en: 'Humans', zh: '人类' },
-  { id: 'wookiees', en: 'Wookiees', zh: '伍基人' },
-  { id: 'jawas', en: 'Jawas', zh: '爪哇人' },
-  { id: 'ewoks', en: 'Ewoks', zh: '伊娃族' },
-  { id: 'hutts', en: 'Hutts', zh: '赫特人' },
-  { id: 'twileks', en: 'Twi\'leks', zh: '特瓦伊萊克人' },
-  { id: 'gungans', en: 'Gungans', zh: '剛耿人' },
-  { id: 'clones', en: 'Clones', zh: '克隆人' },
-  { id: 'chiss', en: 'Chiss', zh: '齊斯人' },
-  { id: 'togruta', en: 'Togruta', zh: '托格魯塔人' }
+  { id: 'humans', en: 'Humans', zh: '人類', ja: '人間', ko: '인간' },
+  { id: 'wookiees', en: 'Wookiees', zh: '伍基人', ja: 'ウーキー', ko: '우키' },
+  { id: 'jawas', en: 'Jawas', zh: '爪哇人', ja: 'ジャワ', ko: '자와' },
+  { id: 'ewoks', en: 'Ewoks', zh: '伊娃族', ja: 'イウォーク', ko: '이워크' },
+  { id: 'hutts', en: 'Hutts', zh: '赫特人', ja: 'ハット', ko: '헛' },
+  { id: 'twileks', en: 'Twi\'leks', zh: '特瓦伊萊克人', ja: 'トワイレック', ko: '트와일렉' },
+  { id: 'gungans', en: 'Gungans', zh: '剛耿人', ja: 'グンガン', ko: '건간' },
+  { id: 'clones', en: 'Clones', zh: '克隆人', ja: 'クローン', ko: '클론' },
+  { id: 'chiss', en: 'Chiss', zh: '齊斯人', ja: 'チス', ko: '치스' },
+  { id: 'togruta', en: 'Togruta', zh: '托格魯塔人', ja: 'トグルータ', ko: '토그루타' }
 ];
 
 // 检测地区
 const detectRegion = (): string => {
   try {
     const language = navigator.language;
+    
+    // 检测繁体中文
+    if (language.includes('zh-TW')) return 'Taiwan';
+    if (language.includes('zh-HK')) return 'Hong Kong';
     
     // 映射语言代码到地区
     if (language.includes('en-US')) return 'USA';
@@ -72,6 +77,22 @@ const DISASTERS = {
     '鄰近星系偵測到恆星爆炸...',
     '超空間事故發生在此區域...',
     '環境災害警告已發布...'
+  ],
+  ja: [
+    'チャットルームに砂嵐が接近中...',
+    'フォースの嵐が近くで検知されました...',
+    '惑星の破壊が差し迫っています...',
+    '近くの星系で恒星爆発を検知...',
+    'ハイパースペース事故が発生...',
+    '環境災害警報が発令されました...'
+  ],
+  ko: [
+    '채팅방에 모래폭풍이 접근 중...',
+    '포스의 폭풍이 근처에서 감지됨...',
+    '행성 파괴가 임박함...',
+    '인근 항성계에서 항성 폭발 감지...',
+    '초공간 사고 발생...',
+    '환경 재해 경보 발령...'
   ]
 };
 
@@ -169,7 +190,7 @@ const BOT_MESSAGES = {
     "邁阿密風雲真是太酷了！唐強森演技一流！🌴",
     "百戰天龍真是無所不能！🔧",
     "馬蓋先探案真是精彩！🏝️",
-    "達拉斯劇情超燒腦！誰槍擊了J.R.？🤠",
+    "達拉斯劇情超燒腦！誰槍擊了J.R.?🤠",
     "《天才老媽》笑料百出！📺",
     "《溫馨家庭》今晚必看！👨‍👩‍👧‍👦",
     "《山街制裁》真是扣人心弦！👮",
@@ -198,16 +219,102 @@ const BOT_MESSAGES = {
     "計算機手錶太方便了！🧮",
     "買了新的暖腿套去跳有氧！🩰",
     "加入了街舞團，要開始練霹靂舞！💃"
+  ],
+  ja: [
+    // 音楽関連
+    "MTVでマイケル・ジャクソンのThrillerを放送中！名作だ！🎵",
+    "マドンナの「Like a Virgin」が大ヒット中！🎤",
+    "シンディ・ローパーの新曲がすごい！🎸",
+    "デュラン・デュランの新しいレコードを買った！💿",
+    "ウォークマンでThe Policeを聴いてる！📻",
+    "Tears for Fearsの新アルバムが素晴らしい！🎵",
+    
+    // 映画関連
+    "帝国の逆襲は史上最高の映画だ！🎬",
+    "トップガンが素晴らしい！トム・クルーズ最高！✈️",
+    "レイダース/失われたアーク、インディ・ジョーンズ最高！🗺️",
+    "バック・トゥ・ザ・フューチャーが凄かった！88mph！⚡",
+    
+    // テレビ番組
+    "ナイトライダーを見てる！デビッド・ハッセルホフ！🚗",
+    "マイアミ・バイスを見てる！ドン・ジョンソンかっこいい！🌴",
+    "マグナム P.I.を見てる！トム・セレック！🏝️",
+    
+    // ゲームとテクノロジー
+    "アーケードでパックマンのハイスコア出した！🕹️",
+    "新しいウォークマンを買った！音楽聴くぞ！📻",
+    "任天堂の新作ゲームが楽しみ！🎮",
+    "ドンキーコングをプレイ中！🦍"
+  ],
+  ko: [
+    // 음악 관련
+    "MTV에서 마이클 잭슨의 Thriller 방송중! 명작이야! 🎵",
+    "마돈나의 'Like a Virgin'이 대히트중! 🎤",
+    "신디 로퍼의 새 노래가 대단해! 🎸",
+    "듀란 듀란의 새 레코드를 샀어! 💿",
+    "워크맨으로 The Police 듣는 중! 📻",
+    "Tears for Fears의 새 앨범이 훌륭해! 🎵",
+    
+    // 영화 관련
+    "제국의 역습이 최고의 영화야! 🎬",
+    "탑건이 정말 멋져! 톰 크루즈 최고! ✈️",
+    "레이더스, 인디아나 존스가 최고야! 🗺️",
+    "백 투 더 퓨처가 대단했어! 88mph! ⚡",
+    
+    // TV 프로그램
+    "나이트 라이더 보는 중! 데이비드 하셀호프! 🚗",
+    "마이애미 바이스 보는 중! 돈 존슨이 멋있어! 🌴",
+    "매그넘 P.I. 보는 중! 톰 셀렉! 🏝️",
+    
+    // 게임과 기술
+    "오락실에서 팩맨 최고 점수 갱신! 🕹️",
+    "새 워크맨을 샀어! 음악 들을 거야! 📻",
+    "닌텐도 새 게임이 기대돼! 🎮",
+    "동키콩 플레이 중! 🦍"
   ]
 };
 
-// 定义支持的语言
-const LANGUAGES = {
+interface Language {
+  titles: {
+    mtv: string;
+    picman: string;
+    future: string;
+  };
+  nickname: string;
+  race: string;
+  region: string;
+  enter: string;
+  inputPlaceholder: string;
+  send: string;
+  onlineUsers: string;
+  welcome: string;
+  footer: {
+    mtv: string;
+    picman: string;
+    future: string;
+  };
+  nicknamePlaceholder: string;
+  nicknameRequired: string;
+  raceRequired: string;
+  autoDetected: string;
+}
+
+interface Race {
+  id: string;
+  en: string;
+  zh: string;
+  ja: string;
+  ko: string;
+}
+
+type SupportedLanguages = 'en' | 'zh' | 'ja' | 'ko';
+
+const LANGUAGES: Record<SupportedLanguages, Language> = {
   en: {
     titles: {
-      mtv: 'MTV CHAT ROOM',
-      picman: 'PIC_MAN BOX',
-      future: 'BACK TO THE FUTURE'
+      mtv: 'MTV Style',
+      picman: 'Picman Style',
+      future: 'Future Style'
     },
     nickname: 'Nickname',
     race: 'Race',
@@ -216,11 +323,7 @@ const LANGUAGES = {
     inputPlaceholder: 'Type a message...',
     send: 'Send',
     onlineUsers: 'Online Users',
-    welcome: {
-      mtv: 'Welcome to MTV Chat Room',
-      picman: 'Welcome to Pic_Man BOX',
-      future: 'Welcome to Back to the Future Chat'
-    },
+    welcome: 'Welcome to the chat room!',
     footer: {
       mtv: 'MTV CHAT ROOM v1.0 © 1988 - 300/1200/2400 BAUD - NO CARRIER',
       picman: 'PIC_MAN BOX v2.1 © 1982 - INSERT COIN TO CONTINUE - GAME OVER',
@@ -233,67 +336,75 @@ const LANGUAGES = {
   },
   zh: {
     titles: {
-      mtv: 'MTV 聊天室',
-      picman: 'PIC_MAN 游戏厅',
-      future: '回到未来聊天室'
+      mtv: 'MTV 風格',
+      picman: 'Picman 風格', 
+      future: '未來風格'
     },
-    nickname: '昵称',
-    race: '种族',
-    region: '地区',
-    enter: '进入聊天室',
-    inputPlaceholder: '输入消息...',
-    send: '发送',
-    onlineUsers: '在线用户',
-    welcome: {
-      mtv: '欢迎来到 MTV 聊天室',
-      picman: '欢迎来到 Pic_Man 游戏厅',
-      future: '欢迎来到回到未来聊天室'
-    },
+    nickname: '暱稱',
+    race: '種族',
+    region: '地區',
+    enter: '進入聊天室',
+    inputPlaceholder: '輸入訊息...',
+    send: '發送',
+    onlineUsers: '線上用戶',
+    welcome: '歡迎來到聊天室！',
     footer: {
-      mtv: 'MTV 聊天室 v1.0 © 1988 - 300/1200/2400 波特 - 无载波',
-      picman: 'PIC_MAN BOX v2.1 © 1982 - 投币继续 - 游戏结束',
-      future: '时光聊天室 v1.21 © 1985 - 时间电路开启 - 通量电容器充能中'
+      mtv: 'MTV 聊天室 v1.0 © 1988 - 300/1200/2400 波特 - 無載波',
+      picman: 'PIC_MAN BOX v2.1 © 1982 - 投幣繼續 - 遊戲結束',
+      future: '時光聊天室 v1.21 © 1985 - 時間電路開啟 - 通量電容器充能中'
     },
-    nicknamePlaceholder: '请输入昵称...',
-    nicknameRequired: '请输入昵称！',
-    raceRequired: '请选择种族！',
-    autoDetected: '* 根据您的连接自动检测'
+    nicknamePlaceholder: '請輸入暱稱...',
+    nicknameRequired: '請輸入暱稱！',
+    raceRequired: '請選擇種族！',
+    autoDetected: '* 根據您的連接自動檢測'
   },
   ja: {
-    title: '1980 チャットルーム',
+    titles: {
+      mtv: 'MTVスタイル',
+      picman: 'ピックマンスタイル',
+      future: '未来スタイル'
+    },
     nickname: 'ニックネーム',
+    race: '種族',
+    region: '地域',
     enter: '入室する',
     inputPlaceholder: 'メッセージを入力...',
     send: '送信',
     onlineUsers: 'オンラインユーザー',
-    welcome: '1980チャットルームへようこそ',
-    footer: 'チャットルーム v1.0 © 1980 - 300/1200/2400 ボー - NO CARRIER',
+    welcome: 'チャットルームへようこそ！',
+    footer: {
+      mtv: 'チャットルーム v1.0 © 1988 - 300/1200/2400 ボー - NO CARRIER',
+      picman: 'PIC_MAN BOX v2.1 © 1982 - コインを入れてください - ゲームオーバー',
+      future: 'BTTF v1.21 © 1985 - タイムサーキット起動中 - フラックス キャパシタ充電中'
+    },
     nicknamePlaceholder: 'ニックネームを入力...',
-    nicknameRequired: 'ニックネームを入力してください！'
+    nicknameRequired: 'ニックネームを入力してください！',
+    raceRequired: '種族を選択してください！',
+    autoDetected: '* 接続から自動検出'
   },
   ko: {
-    title: '1980 채팅방',
+    titles: {
+      mtv: 'MTV 스타일',
+      picman: '픽맨 스타일',
+      future: '미래 스타일'
+    },
     nickname: '닉네임',
+    race: '종족',
+    region: '지역',
     enter: '입장하기',
     inputPlaceholder: '메시지 입력...',
     send: '보내기',
     onlineUsers: '접속자',
-    welcome: '1980 채팅방에 오신 것을 환영합니다',
-    footer: '채팅방 v1.0 © 1980 - 300/1200/2400 보드 - NO CARRIER',
+    welcome: '채팅방에 오신 것을 환영합니다!',
+    footer: {
+      mtv: '채팅방 v1.0 © 1988 - 300/1200/2400 보드 - NO CARRIER',
+      picman: 'PIC_MAN BOX v2.1 © 1982 - 코인을 넣어주세요 - 게임 오버',
+      future: 'BTTF v1.21 © 1985 - 타임서킷 작동중 - 플럭스 커패시터 충전중'
+    },
     nicknamePlaceholder: '닉네임을 입력하세요...',
-    nicknameRequired: '닉네임을 입력해주세요!'
-  },
-  ar: {
-    title: '1980 غرفة الدردشة',
-    nickname: 'الاسم المستعار',
-    enter: 'دخول',
-    inputPlaceholder: 'اكتب رسالة...',
-    send: 'إرسال',
-    onlineUsers: 'المستخدمون المتصلون',
-    welcome: 'مرحباً بك في غرفة الدردشة 1980',
-    footer: 'غرفة الدردشة v1.0 © 1980 - 300/1200/2400 بود - NO CARRIER',
-    nicknamePlaceholder: 'أدخل اسمك المستعار...',
-    nicknameRequired: 'الرجاء إدخال اسم مستعار!'
+    nicknameRequired: '닉네임을 입력해주세요!',
+    raceRequired: '종족을 선택해주세요!',
+    autoDetected: '* 연결에서 자동 감지'
   }
 };
 
@@ -352,6 +463,7 @@ const ChatRoom: React.FC = () => {
   const [race, setRace] = useState('');
   const [region, setRegion] = useState('');
   const [hasJoined, setHasJoined] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [language, setLanguage] = useState<LanguageKey>('en');
   const [chatRoom, setChatRoom] = useState<ChatRoomType>('mtv');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -527,6 +639,13 @@ const ChatRoom: React.FC = () => {
       return;
     }
     
+    setIsConnecting(true);
+  };
+
+  const handleLoadingComplete = () => {
+    setIsConnecting(false);
+    setHasJoined(true);
+    
     // 加入房间，添加新用戶到現有用戶列表中
     const newUser = { nickname, race, region };
     setOnlineUsers([...DEFAULT_USERS, newUser]);
@@ -542,8 +661,6 @@ const ChatRoom: React.FC = () => {
       isSystem: true
     };
     addMessage(welcomeMessage);
-    
-    setHasJoined(true);
   };
 
   // 修改房間切換的處理函數
@@ -614,7 +731,9 @@ const ChatRoom: React.FC = () => {
         className={`${colors.bg} border-2 ${colors.border} ${colors.text} px-2 py-1 text-sm focus:outline-none`}
       >
         <option value="en">English</option>
-        <option value="zh">中文</option>
+        <option value="zh">繁體中文</option>
+        <option value="ja">日本語</option>
+        <option value="ko">한국어</option>
       </select>
     </div>
   );
@@ -655,6 +774,10 @@ const ChatRoom: React.FC = () => {
       );
     }
   };
+
+  if (isConnecting) {
+    return <LoadingScreen onLoadingComplete={handleLoadingComplete} />;
+  }
 
   if (!hasJoined) {
     return (
